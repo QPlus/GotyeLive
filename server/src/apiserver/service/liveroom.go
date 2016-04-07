@@ -165,7 +165,7 @@ sucLoop:
 			fallthrough
 		case gotye_sdk.API_NOT_EXISTS_LIVEROOM_ID_ERROR:
 			logger.Error("ModifyMyLiveRoom : invalid liveroom_id =", req.LiveRoomID)
-			resp.SetStatus(gotye_protocol.API_LIVEROOM_ID_INVALID_ERROR)
+			resp.SetStatus(gotye_protocol.API_LIVEROOM_ID_NOT_EXIST_ERROR)
 			return
 
 		case gotye_sdk.API_REPECT_PASSWORD_LIVEROOM_ERROR:
@@ -237,7 +237,7 @@ func PushingLiveStream(sessinId string, liveRoomId int64, Status int, Timeout in
 
 	if liveRoomId != sd.liveroom_id {
 		logger.Warnf("PushingLiveStream : why liveroomId(%d) != sd.liveroomId(%d).", liveRoomId, sd.liveroom_id)
-		return gotye_protocol.API_LIVEROOM_ID_INVALID_ERROR
+		return gotye_protocol.API_LIVEROOM_ID_NOT_EXIST_ERROR
 	}
 
 	if Status == 1 {

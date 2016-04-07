@@ -32,7 +32,7 @@ func ModifyUserHeadPic(w http.ResponseWriter, r *http.Request) {
 
 	if len(req.SessionID) == 0 {
 		logger.Warn("ModifyUserHeadPic : sessionID is nul ")
-		resp.SetStatus(gotye_protocol.API_UNAUTHORIZED_ERROR)
+		resp.SetStatus(gotye_protocol.API_EXPIRED_SESSION_ERROR)
 		goto end
 	}
 

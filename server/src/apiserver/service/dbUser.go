@@ -11,7 +11,7 @@ import (
 	"github.com/futurez/litego/util"
 )
 
-func DBCheckUserAccount(username, password string) (userId, headPicId int64, account, nickname string, sex int, status_code int) {
+func DBCheckUserAccount(username, password string) (userId, headPicId int64, account, nickname string, sex int8, status_code int) {
 	db := SP_MysqlDbPool.GetDBConn()
 	var pwd string
 	err := db.QueryRow("SELECT user_id, account, nickname, pwd, headpic_id, sex FROM tbl_users WHERE account=? OR phone=? OR email=?",
@@ -107,7 +107,7 @@ func DBModifyUserNickName(userid int64, nickname string) error {
 	return nil
 }
 
-func DBModifyUserInfo(userid int64, nickname string, sex int, addr string) error {
+func DBModifyUserInfo(userid int64, nickname string, sex int8, addr string) error {
 	db := SP_MysqlDbPool.GetDBConn()
 	var setValue []string
 	if len(nickname) > 0 {

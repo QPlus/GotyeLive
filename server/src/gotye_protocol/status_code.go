@@ -5,9 +5,8 @@ const (
 	API_SUCCESS               = 10000
 	API_SERVER_ERROR          = 10001
 	API_PARAM_ERROR           = 10002
-	API_UNAUTHORIZED_ERROR    = 10003
+	API_READ_REQDATA_ERROR    = 10003
 	API_EXPIRED_SESSION_ERROR = 10004
-	API_READ_REQDATA_ERROR    = 10005
 
 	API_ACCOUNT_NOT_EXISTS_ERROR = 10100
 	API_LOGIN_PASSWORD_ERROR     = 10101
@@ -15,14 +14,13 @@ const (
 	API_PHONE_EXISTS_ERROR       = 10103
 	API_PHONE_NOT_EXISTS_ERROR   = 10104
 	API_EMAIL_EXISTS_ERROR       = 10105
+	API_EMAIL_NOT_EXISTS_ERROR   = 10106
 
-	API_END_LIVEROOM_ERROR              = 10200
-	API_LIVEROOM_ID_NOT_EXIST_ERROR     = 10201
-	API_LIVEROOM_ID_INVALID_ERROR       = 10202
-	API_REPECT_PASSWORD_LIVEROOM_ERROR  = 10203
-	API_LIVEROOM_NOT_EXISTS_ERROR       = 10204
-	API_INVALID_LIVEROOM_NAME_ERROR     = 10205
-	API_INVALID_PASSWORD_LIVEROOM_ERROR = 10206
+	API_LIVEROOM_ID_NOT_EXIST_ERROR     = 10200
+	API_REPECT_PASSWORD_LIVEROOM_ERROR  = 10201
+	API_LIVEROOM_NOT_EXISTS_ERROR       = 10202
+	API_INVALID_LIVEROOM_NAME_ERROR     = 10203
+	API_INVALID_PASSWORD_LIVEROOM_ERROR = 10204
 
 	API_DECODE_HEAD_PIC_ERROR = 10301
 )
@@ -31,19 +29,25 @@ const (
 //
 
 var ApiStatus = map[int]string{
-	API_SUCCESS:                     "success",
-	API_SERVER_ERROR:                "server intra error",
-	API_PARAM_ERROR:                 "input param error",
-	API_UNAUTHORIZED_ERROR:          "unauthorized error",
-	API_EXPIRED_SESSION_ERROR:       "expired session error",
-	API_READ_REQDATA_ERROR:          "read reqdata error",
-	API_ACCOUNT_NOT_EXISTS_ERROR:    "account not exists error",
-	API_LOGIN_PASSWORD_ERROR:        "login password error",
-	API_ACCOUNT_EXISTS_ERROR:        "account exists error",
-	API_PHONE_EXISTS_ERROR:          "phone exists error",
-	API_EMAIL_EXISTS_ERROR:          "email exists error",
-	API_END_LIVEROOM_ERROR:          "end liveroom error",
-	API_LIVEROOM_ID_NOT_EXIST_ERROR: "liveroom id not exist error",
-	API_LIVEROOM_NOT_EXISTS_ERROR:   "liveroom not exist error",
-	API_DECODE_HEAD_PIC_ERROR:       "decode head pic error",
+	API_SUCCESS:               "成功",
+	API_SERVER_ERROR:          "系统异常",
+	API_PARAM_ERROR:           "参数错误",
+	API_READ_REQDATA_ERROR:    "读取错误",
+	API_EXPIRED_SESSION_ERROR: "Token无效",
+
+	API_ACCOUNT_NOT_EXISTS_ERROR: "账号不存在",
+	API_LOGIN_PASSWORD_ERROR:     "登录密码错误",
+	API_ACCOUNT_EXISTS_ERROR:     "账号已注册",
+	API_PHONE_EXISTS_ERROR:       "手机已注册",
+	API_PHONE_NOT_EXISTS_ERROR:   "手机不存在",
+	API_EMAIL_EXISTS_ERROR:       "邮箱已注册",
+	API_EMAIL_NOT_EXISTS_ERROR:   "邮箱不存在",
+
+	API_LIVEROOM_ID_NOT_EXIST_ERROR:     "直播室ID不存在",
+	API_REPECT_PASSWORD_LIVEROOM_ERROR:  "直播室密码重复",
+	API_LIVEROOM_NOT_EXISTS_ERROR:       "直播室不存在",
+	API_INVALID_LIVEROOM_NAME_ERROR:     "直播室名称非法",
+	API_INVALID_PASSWORD_LIVEROOM_ERROR: "直播室密码非法",
+
+	API_DECODE_HEAD_PIC_ERROR: "头像解码错误",
 }

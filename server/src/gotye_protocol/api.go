@@ -32,7 +32,7 @@ type LoginResponse struct {
 	LiveRoomID int64  `json:"liveRoomId"`
 	SessionID  string `json:"sessionId"`
 	HeadPicId  int64  `json:"headPicId"`
-	Sex        int    `json:"sex"` //1:male, 2: female
+	Sex        int8   `json:"sex"` //1:male, 2: female
 }
 
 //api : /live/Register
@@ -96,7 +96,7 @@ type ModifyUserPwdResponse struct {
 type ModifyUserInfoRequest struct {
 	SessionID string `json:"sessionId"`
 	NickName  string `json:"nickName"`
-	Sex       int    `json:"sex"` //1:male, 2: female
+	Sex       int8   `json:"sex"` //1:male, 2: female
 	Address   string `json:"address"`
 }
 

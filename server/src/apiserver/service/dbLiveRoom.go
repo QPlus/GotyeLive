@@ -192,7 +192,7 @@ func DBGetLiveRoomByLiveroomId(resp *gotye_protocol.SearchLiveStreamResponse, li
 		&resp.LiveUserPwd, &resp.AnchorName, &resp.HeadPicId)
 	switch {
 	case err == sql.ErrNoRows:
-		logger.Warnf("DBGetLiveRoomByLiveroomId : not have liveroom_id=", liveroomId)
+		logger.Warn("DBGetLiveRoomByLiveroomId : not have liveroom_id=", liveroomId)
 		return err
 	case err != nil:
 		logger.Error("DBGetLiveRoomByLiveroomId : ", err.Error())
@@ -316,19 +316,19 @@ func DBGetOfflineFocusLiveRoomList(
 	)
 
 	if lastIndex == 0 {
-		rows, err = db.Query(`SELECT a.id, b.nickname, b.headpic_id, c.liveroom_id, c.liveroom_name, 
-        c.liveroom_desc, c.liveroom_topic, c.anchor_pwd, c.user_pwd
-        FROM tbl_follow_liverooms a INNER JOIN tbl_users b INNER JOIN tbl_liverooms c
-        ON a.user_id=b.user_id AND a.liveroom_id=c.liveroom_id
-        WHERE a.user_id=? AND (a.liveroom_id NOT IN (SELECT liveroom_id FROM tbl_online_liverooms))
-        ORDER BY a.id DESC LIMIT ?`, userId, count)
+		rows, err = db.Query(`SELECT a.user_id, a.nickname, a.headpic_id, b.liveroom_id, 
+        b.liveroom_name, b.liveroom_desc, b.liveroom_topic, b.anchor_pwd, b.user_pwd
+        FROM tbl_users a INNER JOIN tbl_liverooms b ON a.user_id=b.user_id 
+        WHERE b.liveroom_id IN (SELECT liveroom_id FROM tbl_follow_liverooms 
+        WHERE user_id=? AND (liveroom_id NOT IN (SELECT liveroom_id FROM tbl_online_liverooms)))
+        ORDER BY a.user_id DESC LIMIT ?`, userId, count)
 	} else {
-		rows, err = db.Query(`SELECT a.id, b.nickname, b.headpic_id, c.liveroom_id, c.liveroom_name, 
-        c.liveroom_desc, c.liveroom_topic, c.anchor_pwd, c.user_pwd
-        FROM tbl_follow_liverooms a INNER JOIN tbl_users b INNER JOIN tbl_liverooms c
-        ON a.user_id=b.user_id AND a.liveroom_id=c.liveroom_id
-        WHERE a.user_id=? AND (a.liveroom_id NOT IN (SELECT liveroom_id FROM tbl_online_liverooms))
-        ORDER BY a.id DESC LIMIT ?,?`, userId, lastIndex, count)
+		rows, err = db.Query(`SELECT a.user_id, a.nickname, a.headpic_id, b.liveroom_id, 
+        b.liveroom_name, b.liveroom_desc, b.liveroom_topic, b.anchor_pwd, b.user_pwd
+        FROM tbl_users a INNER JOIN tbl_liverooms b ON a.user_id=b.user_id 
+        WHERE b.liveroom_id IN (SELECT liveroom_id FROM tbl_follow_liverooms 
+        WHERE user_id=? AND (liveroom_id NOT IN (SELECT liveroom_id FROM tbl_online_liverooms)))
+        ORDER BY a.user_id DESC LIMIT ?,?`, userId, lastIndex, count)
 	}
 
 	if err != nil {
@@ -336,10 +336,10 @@ func DBGetOfflineFocusLiveRoomList(
 		return lastIndex, err
 	}
 
-	lastId := lastIndex
+	lastuserId := lastIndex
 	for rows.Next() {
 		var info gotye_protocol.LiveRoomInfo
-		if err = rows.Scan(&lastId, &info.AnchorName, &info.HeadPicId,
+		if err = rows.Scan(&lastuserId, &info.AnchorName, &info.HeadPicId,
 			&info.LiveRoomId, &info.LiveRoomName, &info.LiveRoomDesc,
 			&info.LiveRoomTopic, &info.LiveAnchorPwd, &info.LiveUserPwd); err != nil {
 			logger.Error("DBGetAllLiveRoomList : ", err.Error())
@@ -356,5 +356,5 @@ func DBGetOfflineFocusLiveRoomList(
 		resp.OfflineList = resp.OfflineList[:0]
 		return lastIndex, err
 	}
-	return lastId, nil
+	return lastuserId, nil
 }

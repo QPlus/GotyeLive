@@ -15,11 +15,11 @@ func LiveRoomSearch(resp *gotye_protocol.SearchLiveStreamResponse, sessionId, ke
 		return
 	}
 	sd.UpdateTick()
-	logger.Infof("LiveRoomSearch : sessionId=%d, keyword=%s", sessionId, keyword)
+	logger.Infof("LiveRoomSearch : sessionId=%s, keyword=%s", sessionId, keyword)
 
 	liveroomId, err := strconv.Atoi(keyword)
 	if err != nil {
-		logger.Warn("LiveRoomSearch : keyword=", keyword)
+		logger.Warnf("LiveRoomSearch : keyword=%d, err=%s", keyword, err.Error())
 		resp.SetStatus(gotye_protocol.API_PARAM_ERROR)
 		return
 	}
@@ -27,7 +27,7 @@ func LiveRoomSearch(resp *gotye_protocol.SearchLiveStreamResponse, sessionId, ke
 	err = DBGetLiveRoomByLiveroomId(resp, int64(liveroomId), sd.user_id)
 	if err != nil {
 		logger.Warn("LiveRoomSearch : keyword=", keyword)
-		resp.SetStatus(gotye_protocol.API_PARAM_ERROR)
+		resp.SetStatus(gotye_protocol.API_LIVEROOM_ID_NOT_EXIST_ERROR)
 		return
 	}
 	resp.FollowCount = DBGetFollowCount(resp.LiveRoomId)

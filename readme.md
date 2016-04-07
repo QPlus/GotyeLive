@@ -17,5 +17,5 @@ WP等操作系统，支持微信，微博等社交平台分享，提供后台监管等一站式互动视频直播解决
 员共同开发android版本。
 
 ###亲加直播交流QQ群
-亲加直播—交流群_01 : 475461326
-亲加直播—交流群_02 : 523970998
+亲加直播—交流群_01 : 475461326 (https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png)
+亲加直播—交流群_02 : 523970998 (https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group02.png)
