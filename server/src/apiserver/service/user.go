@@ -9,7 +9,7 @@ import (
 )
 
 func UserLogin(resp *gotye_protocol.LoginResponse, req *gotye_protocol.LoginRequest) {
-	user_id, headPicId, account, nickname, status_code := DBCheckUserAccount(req.Account, req.Passwd)
+	user_id, headPicId, account, nickname, sex, status_code := DBCheckUserAccount(req.Account, req.Passwd)
 
 	resp.SetStatus(status_code)
 	if status_code == gotye_protocol.API_SUCCESS {
@@ -17,6 +17,7 @@ func UserLogin(resp *gotye_protocol.LoginResponse, req *gotye_protocol.LoginRequ
 		resp.NickName = nickname
 		resp.LiveRoomID = DBGetLiveroomIdByUserId(user_id)
 		resp.HeadPicId = headPicId
+		resp.Sex = sex
 
 		//判断是否已经登录过.
 		resp.SessionID = SP_sessionMgr.addSession(user_id, resp.LiveRoomID, resp.Account, resp.NickName)

@@ -11,11 +11,11 @@ import (
 	"github.com/futurez/litego/util"
 )
 
-func DBCheckUserAccount(username, password string) (userId, headPicId int64, account, nickname string, status_code int) {
+func DBCheckUserAccount(username, password string) (userId, headPicId int64, account, nickname string, sex int, status_code int) {
 	db := SP_MysqlDbPool.GetDBConn()
 	var pwd string
-	err := db.QueryRow("SELECT user_id, account, nickname, pwd, headpic_id FROM tbl_users WHERE account=? OR phone=? OR email=?",
-		username, username, username).Scan(&userId, &account, &nickname, &pwd, &headPicId)
+	err := db.QueryRow("SELECT user_id, account, nickname, pwd, headpic_id, sex FROM tbl_users WHERE account=? OR phone=? OR email=?",
+		username, username, username).Scan(&userId, &account, &nickname, &pwd, &headPicId, &sex)
 	switch {
 	case err == sql.ErrNoRows:
 		logger.Infof("DBCheckUserAccount : %s not exists.", username)
