@@ -3,7 +3,9 @@
 ##简介
 
 ##直播APP技术框架
-<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/freamwork.jpg" width="500" alt="全民直播App视频技术" align=center/>
+<div align="center">
+<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/freamwork.jpg" width="800" alt="直播APP技术框架图" align="center"/>
+</div>
 
 目前亲加提供:
 
@@ -15,7 +17,7 @@
 ##亲加直播交流QQ群
 亲加直播—交流群_01 : [544476772](https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png)
 
-<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png" width="200" alt="全民直播App视频技术" align=center/>
+<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png" width="200" alt="全民直播App视频技术"/>
 
 
 ##亲加直播qpluslive服务器程序
