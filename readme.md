@@ -3,13 +3,11 @@
 ##简介
 
 ##直播APP技术框架
-<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/freamwork.jpg" width="500" alt="全民直播App视频技术" align="center"/>
+<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/freamwork.jpg" width="500" alt="全民直播App视频技术" align=center/>
 
 目前亲加提供:
 
-[后台服务器(golang)](https://github.com/QPlus/qplus-live-server)
-
-[IOSc App(object-C)](https://github.com/QPlus/qplus-live-ios)
+[后台服务器(golang)](https://github.com/QPlus/qplus-live-server) [IOS App(object-C)](https://github.com/QPlus/qplus-live-ios)
 
 [Android  App(java)]亲加希望大家通过学习之后,有开源精神的程序员能够参与到这个开源项目当中，与亲加共同开发android版本。
 
@@ -17,7 +15,7 @@
 ##亲加直播交流QQ群
 亲加直播—交流群_01 : [544476772](https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png)
 
-<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png" width="200" alt="全民直播App视频技术" align="center"/>
+<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png" width="200" alt="全民直播App视频技术" align=center/>
 
 
 ##亲加直播qpluslive服务器程序
