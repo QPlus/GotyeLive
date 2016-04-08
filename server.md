@@ -1,4 +1,4 @@
-#亲加直播qpluslive服务器程序
+#亲加直播GotyeLive服务器程序
 
 ##简介
 该项目是亲加直播客户端[QPlusLive For IOS](https://github.com/QPlus/GotyeLive_IOS)的直播业务服务器。
