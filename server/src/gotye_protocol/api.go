@@ -56,9 +56,6 @@ type RegisterRequest struct {
     "access"   : "/live/Register"
     "status"   :
     "desc"     :
-    "account"  : "zhangsan"
-    "nickName" : "zhangsan" //刚注册成功的,nickName等于account
-    "sessionId": "sasassasaasasasasas" (32个字节的字符串)
 }
 */
 type RegisterResponse struct {

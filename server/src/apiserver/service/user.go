@@ -100,7 +100,7 @@ func UserHeadPicModify(resp *gotye_protocol.ModifyUserHeadPicResponse, req *goty
 	resp.SetStatus(gotye_protocol.API_SUCCESS)
 }
 
-func GetHeadPicById(id int64) []byte {
+func GetHeadPicById(id int64) ([]byte, error) {
 	logger.Info("GetHeadPicById : id=", id)
 	return DBGetUserHeadPic(id)
 }

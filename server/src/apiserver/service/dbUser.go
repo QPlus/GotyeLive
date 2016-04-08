@@ -205,17 +205,19 @@ func DBModifyUserPwd(phone, pwd string) error {
 	}
 }
 
-func DBGetUserHeadPic(picId int64) []byte {
+func DBGetUserHeadPic(picId int64) ([]byte, error) {
 	db := SP_MysqlDbPool.GetDBConn()
 	var pic []byte
 	err := db.QueryRow("SELECT pic FROM tbl_pictures WHERE pic_id=?", picId).Scan(&pic)
 	switch {
 	case err == sql.ErrNoRows:
 		logger.Warn("DBGetUserHeadPic : why not row, picId=", picId)
+		return nil, err
 	case err != nil:
 		logger.Error("DBGetUserHeadPic : ", err.Error())
+		return nil, err
 	default:
 		logger.Info("DBGetUserHeadPic : success get pic_id=", picId)
 	}
-	return pic
+	return pic, nil
 }

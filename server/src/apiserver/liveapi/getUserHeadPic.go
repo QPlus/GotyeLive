@@ -16,21 +16,28 @@ func GetUserHeadPic(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(32 << 20)
 	imageId, err := strconv.Atoi(r.FormValue("id"))
 	if err != nil {
-		logger.Warn("GetUserHeadPic : failed.")
+		logger.Warn("GetUserHeadPic : convert id err.")
 		resp.SetStatus(gotye_protocol.API_PARAM_ERROR)
 		resp.SetAccess("/live/GetUserHeadPic")
 		httplib.HttpResponseJson(w, http.StatusOK, resp)
 	}
 
 	if imageId == 0 {
-		logger.Warn("GetUserHeadPic : failed.")
+		logger.Warn("GetUserHeadPic : id is 0.")
 		resp.SetStatus(gotye_protocol.API_PARAM_ERROR)
 		resp.SetAccess("/live/GetUserHeadPic")
 		httplib.HttpResponseJson(w, http.StatusOK, resp)
 		return
 	}
 
-	headPic := service.GetHeadPicById(int64(imageId))
-	logger.Infof("GetUserHeadPic : headPicId=%d, headPic=%d", imageId, len(headPic))
-	httplib.HttpResponseImage(w, headPic)
+	headPic, err := service.GetHeadPicById(int64(imageId))
+	if err != nil {
+		logger.Warn("GetUserHeadPic : failed.")
+		resp.SetStatus(gotye_protocol.API_PARAM_ERROR)
+		resp.SetAccess("/live/GetUserHeadPic")
+		httplib.HttpResponseJson(w, http.StatusOK, resp)
+	} else {
+		logger.Infof("GetUserHeadPic : headPicId=%d, headPic=%d", imageId, len(headPic))
+		httplib.HttpResponseImage(w, headPic)
+	}
 }
