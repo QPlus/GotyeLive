@@ -1,4 +1,4 @@
-#QPlus Live Server API 文档
+#QPlus Live Server API 文档(app应用层协议)
 
 ##返回码列表
 
