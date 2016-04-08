@@ -2,7 +2,7 @@
 
 ##返回码列表
 
-请求相关
+###请求相关
 
 |返回码                   |描述               |值   |备注        |
 |-------------------------|-------------------|-----|------------|
@@ -11,9 +11,10 @@
 |API_PARAM_ERROR	      |"参数错误"         |10002|几乎不会发生|
 |API_EXPIRED_SESSION_ERROR|"登录过期,重新登录"|10003|离最后一次访问服务器超过一个小时过期|
 
-回复相关
+###回复相关
 
-账号相关
+####账号相关
+
 |返回码                      |描述          |值   |备注      |
 |----------------------------|--------------|-----|----------|
 |API_ACCOUNT_NOT_EXISTS_ERROR|"账号不存在"  |10100|登录时    |
@@ -24,7 +25,8 @@
 |API_EMAIL_EXISTS_ERROR      |"邮箱已注册"  |10105|注册时    |
 |API_EMAIL_NOT_EXISTS_ERROR  |"邮箱不存在"	|10106|暂时未用  |
 
-直播室相关
+####直播室相关
+
 |返回码                             |描述            |值   |备注               |
 |-----------------------------------|----------------|-----|-------------------|
 |API_LIVEROOM_ID_NOT_EXIST_ERROR    |"直播室ID不存在"|10200|推流,修改,搜索时   |
@@ -33,7 +35,8 @@
 |API_INVALID_LIVEROOM_NAME_ERROR    |"直播室名称非法"|10203|修改直播室时	   |
 |API_INVALID_PASSWORD_LIVEROOM_ERROR|"直播室密码非法"|10204|一般不会发生       |
 
-上传图片
+####图片相关
+
 |返回码		              |描述          |值   |备注  						 |
 |-------------------------|--------------|-----|-----------------------------|
 |API_DECODE_HEAD_PIC_ERROR|"头像解码错误"|10300|base64解压头像时,一般不会发生|
@@ -72,7 +75,7 @@
 ##以下API都是POST method
 
 ```
-api : /live/Login
+用户登录API : /live/Login
 
 request
 {
@@ -95,7 +98,7 @@ response
 ```
 
 ```
-api : /live/Register
+用户注册API : /live/Register
 
 request
 {
@@ -114,7 +117,7 @@ response
 ```
 
 ```
-api : live/ModifyUserPwd
+用户密码修改API : live/ModifyUserPwd
 
 request
 {
@@ -131,7 +134,7 @@ response
 ```
 
 ```
-api : /live/ModifyUserInfo
+用户个人信息修改API : /live/ModifyUserInfo
 
 request
 {
@@ -150,7 +153,7 @@ response
 ```
 
 ```
-api : /live/ModifyUserHeadPic
+用户头像修改API : /live/ModifyUserHeadPic
 
 request
 {
@@ -167,7 +170,7 @@ response
 ```
 
 ```
-api :　/live/GetLiveRoomList
+获取直播室列表API :　/live/GetLiveRoomList
 
 request
 {
@@ -240,7 +243,7 @@ response(fcous)
 ```
 
 ```
-api : /live/GetMyLiveRoomId
+获取用户自己直播室账号API : /live/GetMyLiveRoomId
 
 request
 {
@@ -257,7 +260,7 @@ response
 ```
 
 ```
-api : /live/GetMyLiveRoom
+获取用户自己直播室API : /live/GetMyLiveRoom
 
 request
 {
@@ -284,7 +287,7 @@ response
 ```
 
 ```
-api : /live/ModifyMyLiveRoom
+修改用户自己直播室API : /live/ModifyMyLiveRoom
 
 request
 {
@@ -306,7 +309,7 @@ response
 ```
 
 ```
-api : /live/CreateLiveRoom
+创建直播室API : /live/CreateLiveRoom
 
 request
 {
@@ -330,7 +333,7 @@ response
 ```
 
 ```
-api : /live/FollowLiveRoom
+关注和取消其他直播室API : /live/FollowLiveRoom
 
 request
 {
@@ -349,7 +352,7 @@ response
 ```
 
 ```
-api : /live/PushLiveStream
+开启和关闭直播API : /live/PushLiveStream
 
 request
 {
@@ -368,7 +371,7 @@ response
 ```
 
 ```
-api : /live/SearchLiveStream
+搜索直播室API : /live/SearchLiveStream
 
 request
 {
@@ -399,7 +402,7 @@ response
 ##以下API都是Get method
 
 ```
-api : /live/GetUserHeadPic
+获取用户头像API : /live/GetUserHeadPic
 
 request
 /live/GetUserHeadPic?id=headPicId

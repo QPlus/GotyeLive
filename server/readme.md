@@ -38,6 +38,6 @@ run -i or info  : 查看服务器信息
 run -h or help  : 获得脚本使用说明
 
 ##API说明
-请查看[API](api_doc.md)
+请查看[API_DOC](api_doc.md)
 
 
