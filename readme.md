@@ -1,22 +1,66 @@
-#亲加直播整体解决方案(qpluslive)
+#亲加直播(qplus-live)
 
 ##简介
 
-[亲加](http://www.gotye.com.cn/)自2011年成立以来，推出第一款产品“亲加移动IM云”，提供PaaS/SaaS一体化服务平台，覆盖用户近3亿，合作企业近
-6000家[亲加IM云](http://www.gotye.com.cn/IM.html); 之后亲加推出第二款产品“亲加互动视频直播”，刚推出即支持IOS,
-Android,WP等操作系统，支持微信，微博等社交平台分享，提供后台监管等一站式互动视频直播解决方案[亲加互动视频直播]
-(http://www.gotye.com.cn/live.html)。
+##直播APP技术框架
+![]<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/freamwork.jpg" width="200" alt="全民直播App视频技术" align=center/>
 
-亲加互动直播目前已经与金融、电商、教育和游戏等行业的知名企业进行深度合作，为他们提供权威的互动视频技术。正
-是于这些企业合作之后，我们发现虽然已经提供完整的sdk包，但是客户在集成的时候还是需要很多困难，我们分析发现原因
-是视频技术本身的门槛比较高，所以亲加决定基于我们的SDK开发一款商业级的全民直播APP(亲加直播),并且以开源的方式分
-享给业界，大家开源通过开源项目的学习，能够更快速的把视频直播技术应用到自己的商业产品中。
+目前亲加提供:
+[后台服务器(golang)](https://github.com/QPlus/qplus-live-server)
+[IOSc App(object-C)](https://github.com/QPlus/qplus-live-ios),
+[Android  App(java)]亲加希望大家通过学习之后,有开源精神的程序员能够参与到这个开源项目当中，与亲加共同开发android版本。
 
-##亲加直播(qpluslive)
-开源项目分为3个部分:
-亲加提供[后台服务器(golang实现)](https://github.com/QPlus/GotyeLive/tree/master/server)和[IOS app(object-C实现)]
-(https://github.com/QPlus/GotyeLive/tree/master/app/ios),亲加希望大家通过学习之后,有开源精神的程序员能够参与到这
-个开源项目当中，与亲加共同开发android版本。
 
-###亲加直播交流QQ群
+##亲加直播交流QQ群
 亲加直播—交流群_01 : [544476772](https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png)
+![]<img src="https://github.com/QPlus/GotyeLive/blob/master/pic/qpluslive-group01.png" width="200" alt="全民直播App视频技术" align=center/>
+
+
+
+
+##亲加直播qpluslive服务器程序
+
+###服务器简介
+该项目是亲加直播客户端[QPlusLive For IOS](https://github.com/QPlus/GotyeLive_IOS)的直播业务服务器。
+
+该项目是使用Golang编写的直播业务服务器，可以直接运行，为了方便大家测试使用，可以使用已编译版本，[点击下载]
+(https://github.com/QPlus/GotyeLive/blob/master/doc/gotyelive_server.tar.gz)
+
+
+该项目完整安装全民直播APP而设计，目前是1.0版本，后期会不断更新，敬请期待。
+
+### 使用方式
+该项目需要使用Mysql,所以首先系统得安装Mysql。
+
+创建数据库和表的SQL脚本为[gotye_open_live.sql](https://github.com/QPlus/GotyeLive/blob/master/doc/gotye_open_live.sql), 
+下载解压后的.tar.gz包里面既有。
+
+压缩包中提供了编译好的支持`Linux`的可执行文件。
+
+压缩包中的[config.ini](https://github.com/QPlus/GotyeLive/blob/master/doc/config.ini)是服务器的配置文件，其中的内容请安格式修改, 具体说明如下:
+```
+[apiserver]
+#服务器监听端口
+http_port = 8080
+
+[mysql]
+#数据库地址
+address = 192.168.1.10
+#数据库名
+dbname  = gotye_open_live
+#数据库账号
+account = app
+#数据库密码
+password = 123456
+```
+压缩包中的[run](https://github.com/QPlus/GotyeLive/blob/master/doc/run)是服务器启动脚本，使用说明如下:
+run -s or start : 启动服务器程序
+run -k or stop  : 关闭服务器程序
+run -i or info  : 查看服务器信息
+run -h or help  : 获得脚本使用说明
+
+##API说明
+
+[应用层协议]请查看[API_DOC](api_doc.md)
+
+
