@@ -414,3 +414,13 @@ type SearchLiveStreamResponse struct {
 	LiveRoomInfo
 	IsPlay int8 `json:"isPlay"` //1 : 直播, 0: 未直播
 }
+
+//api : /live/GetAdLiveRoom
+type GetAdLiveRoomListRequest struct {
+	SessionId string `json:"sessionId"`
+}
+
+type GetAdLiveRoomListResponse struct {
+	ApiResponse
+	LiveRoomInfo
+}
