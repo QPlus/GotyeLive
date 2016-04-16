@@ -9,20 +9,23 @@ import (
 )
 
 const (
-	PushingLimitTimeOut = time.Minute * 2
-	PreCheckPushStatus  = time.Minute * 2
-	UpdatePlayNumTimer  = time.Minute * 1
+	LimitTimeOut  = time.Minute * 1
+	LimitPushTime = time.Minute * 1
+	PreRefreshNum = 20
 )
 
 type OnlineLive struct {
-	//userId     int64
-	liveRoomId int64
-	tick       time.Time
-	limit      time.Duration
+	liveRoomId    int64
+	tick          time.Time
+	limit         time.Duration
+	playUserCount int
+	playRtmpUrls  string
+	playHlsUrls   string
+	playFlvUrls   string
 }
 
 type OnlineLiveManager struct {
-	sync.Mutex
+	sync.RWMutex
 	wg      sync.WaitGroup
 	liveMap map[int64]*OnlineLive
 }
@@ -30,82 +33,113 @@ type OnlineLiveManager struct {
 var SP_onlineLiveMgr = &OnlineLiveManager{liveMap: make(map[int64]*OnlineLive)}
 
 func init() {
-	time.AfterFunc(PreCheckPushStatus, func() { SP_onlineLiveMgr.GC() })
-	time.AfterFunc(UpdatePlayNumTimer, func() { SP_onlineLiveMgr.UpdateNum() })
+	time.AfterFunc(LimitTimeOut, func() { SP_onlineLiveMgr.GC() })
 }
 
-func (om *OnlineLiveManager) UpdateNum() {
-	var ids []int64
-	om.Lock()
-	for id, _ := range om.liveMap {
-		ids = append(ids, id)
+func (om *OnlineLiveManager) GC() {
+	var inactiveIds []int64
+	var activeIds []int64
+	now := time.Now()
+
+	om.RLock()
+	for id, online := range om.liveMap {
+		if now.Sub(online.tick) > online.limit {
+			inactiveIds = append(inactiveIds, id)
+		} else {
+			activeIds = append(activeIds, id)
+		}
 	}
-	om.Unlock()
+	om.RUnlock()
 
-	for _, id := range ids {
-		om.wg.Add(1)
+	go func() {
+		om.Lock()
+		for _, id := range inactiveIds {
+			logger.Debug("GC : Overdue liveroom_id = ", id)
+			delete(om.liveMap, id)
+			DBDelOnlineLiveRoom(id)
+		}
+		om.Unlock()
+	}()
 
-		go func(id int64) {
-			defer om.wg.Done()
+	total := len(activeIds)
+	if total > 0 {
+		limit := (total + PreRefreshNum) / PreRefreshNum * PreRefreshNum
+		logger.Debug("GC : actvieIds=", activeIds, ",total=", total, ",limit=", limit)
 
-			for i := 0; i < 2; i++ {
-				apptoken, err := GotyeAccessAppToken()
-				if err != nil {
-					logger.Error("UpdateNum : GotyeAccessAppToken Failed, ", err.Error())
-					return
-				}
+		for i := 0; i < limit; i += PreRefreshNum {
 
-				num, status, err := GotyeGetLiveContext(apptoken, id)
+			var ids []int64
+
+			if i != (limit - PreRefreshNum) {
+				ids = activeIds[i : i+PreRefreshNum]
+				logger.Debug("GC : last i=", i, ",ids=", ids)
+			} else {
+				ids = activeIds[i:total]
+				logger.Debug("GC : pre i=", i, ",ids=", ids)
+			}
+
+			om.wg.Add(1)
+			go func(ids []int64) {
+				defer om.wg.Done()
+
+				resp, err := GotyeGetRoomsLiveInfo(ids...)
 				if err != nil {
 					logger.Error("UpdateNum : GotyeGetLiveContext Failed, ", err.Error())
 					return
 				}
 
-				switch status {
-				case gotye_sdk.API_SUCCESS:
-					DBUpdateOnlineLiveRoom(id, num)
-					return
-
-				case gotye_sdk.API_INVALID_TOKEN_ERROR:
-					if i == 0 {
-						GotyeClearAccessToken()
-						logger.Info("UpdateNum : invalid token error, and accesstoken again.")
-					} else {
-						logger.Error("UpdateNum : why access new token, but return invalid")
-						return
-					}
-
-				default:
-					logger.Error("UpdateNum : GotyeGetLiveContext status=%d", status)
-					return
+				if resp.Status == gotye_sdk.API_SUCCESS {
+					om.UpStreamInfo(resp.Entities)
+				} else {
+					logger.Error("UpdateNum : GotyeGetLiveContext status=", resp.Status)
 				}
-			}
 
-		}(id)
-
+			}(ids)
+		}
 		om.wg.Wait()
 	}
 
-	time.AfterFunc(PreCheckPushStatus, func() { om.UpdateNum() })
+	time.AfterFunc(LimitTimeOut, func() { om.GC() })
 }
 
-func (om *OnlineLiveManager) GC() {
+func (om *OnlineLiveManager) UpStreamInfo(entities []gotye_sdk.LiveRoomInfo) {
 	om.Lock()
 	defer om.Unlock()
 
-	delList := make([]int64, 0, len(om.liveMap))
-	now := time.Now()
-	for id, online := range om.liveMap {
-		if now.Sub(online.tick) > online.limit {
-			delList = append(delList, id)
+	for _, entity := range entities {
+		online, ok := om.liveMap[entity.RoomId]
+		if !ok {
+			continue
+		}
+
+		up := false
+
+		if len(entity.PlayRtmpUrls) > 0 && entity.PlayRtmpUrls[0] != online.playRtmpUrls {
+			online.playRtmpUrls = entity.PlayRtmpUrls[0]
+			up = true
+		}
+
+		if len(entity.PlayHlsUrls) > 0 && entity.PlayHlsUrls[0] != online.playHlsUrls {
+			online.playHlsUrls = entity.PlayHlsUrls[0]
+			up = true
+		}
+
+		if len(entity.PlayFlvUrls) > 0 && entity.PlayFlvUrls[0] != online.playFlvUrls {
+			online.playFlvUrls = entity.PlayFlvUrls[0]
+			up = true
+		}
+
+		if up {
+			logger.Info("UpStreamInfo : up liveroomId=", entity.RoomId)
+			DBUpdateLiveroomUrls(entity.RoomId, online.playRtmpUrls, online.playHlsUrls, online.playFlvUrls)
+		}
+
+		if entity.PlayUserCount != online.playUserCount {
+			logger.Info("UpStreamInfo : up liveroomId=", entity.RoomId, ", number=", online.playUserCount)
+			online.playUserCount = entity.PlayUserCount
+			DBUpdateOnlineLiveRoom(entity.RoomId, entity.PlayUserCount)
 		}
 	}
-	for _, id := range delList {
-		logger.Debug("GC : Overdue liveroom_id = ", id)
-		delete(om.liveMap, id)
-		DBDelOnlineLiveRoom(id)
-	}
-	time.AfterFunc(PreCheckPushStatus, func() { om.GC() })
 }
 
 func (om *OnlineLiveManager) StartPushStream(liveroomId int64, limit int) {
@@ -119,12 +153,19 @@ func (om *OnlineLiveManager) StartPushStream(liveroomId int64, limit int) {
 		return
 	}
 
-	limitTime := PushingLimitTimeOut
+	limitTime := LimitPushTime
 	if limit > 0 {
 		limitTime = time.Second * time.Duration(limit)
 	}
-	online = &OnlineLive{liveroomId, time.Now(), limitTime}
-	logger.Infof("StartPushStream : new liveroomId=%d,limit=%ss", online.liveRoomId, online.limit)
+	online = &OnlineLive{}
+	online.liveRoomId = liveroomId
+	online.tick = time.Now()
+	online.limit = limitTime
+	online.playUserCount = 0
+	online.playRtmpUrls, online.playHlsUrls, online.playFlvUrls = DBGetLiveroomUrls(liveroomId)
+
+	logger.Infof("StartPushStream : start liveroomId=%d,limit=%ss,playRtmpUrls=%s,playHlsUrls=%s,playFlvUrls=%s",
+		online.liveRoomId, online.limit, online.playRtmpUrls, online.playHlsUrls, online.playFlvUrls)
 	om.liveMap[liveroomId] = online
 	DBAddOnlineLiveRoom(liveroomId)
 }

@@ -24,7 +24,7 @@ func LiveRoomSearch(resp *gotye_protocol.SearchLiveStreamResponse, sessionId, ke
 		return
 	}
 
-	err = DBGetLiveRoomByLiveroomId(resp, int64(liveroomId), sd.user_id)
+	err = DBGetLiveRoomByLiveroomId(resp, int64(liveroomId))
 	if err != nil {
 		logger.Warn("LiveRoomSearch : keyword=", keyword)
 		resp.SetStatus(gotye_protocol.API_LIVEROOM_ID_NOT_EXIST_ERROR)

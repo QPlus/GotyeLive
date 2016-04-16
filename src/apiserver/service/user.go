@@ -8,6 +8,31 @@ import (
 	"github.com/futurez/litego/util"
 )
 
+func UserRegister(resp *gotye_protocol.RegisterResponse, req *gotye_protocol.RegisterRequest) {
+	if len(req.AuthCode) == 0 {
+		logger.Warn("UserRegister : authcode is null. ")
+		resp.SetStatus(gotye_protocol.API_AUTHCODE_ERROR)
+		return
+	}
+
+	if !SP_phoneCode.Check(req.Phone, req.AuthCode) {
+		logger.Warn("UserRegister : authcode is error, authcode=", req.AuthCode)
+		resp.SetStatus(gotye_protocol.API_AUTHCODE_ERROR)
+		return
+	}
+	SP_phoneCode.Delete(req.Phone)
+
+	user_id := DBCreateUserAccount(req.Phone, req.Passwd)
+	if user_id < 0 {
+		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
+		logger.Warn("UserRegister : create user error!")
+		return
+	}
+
+	resp.SetStatus(gotye_protocol.API_SUCCESS)
+	logger.Info("UserRegister : Success. phone=", req.Phone)
+}
+
 func UserLogin(resp *gotye_protocol.LoginResponse, req *gotye_protocol.LoginRequest) {
 	user_id, headPicId, account, nickname, sex, status_code := DBCheckUserAccount(req.Account, req.Passwd)
 
@@ -25,36 +50,6 @@ func UserLogin(resp *gotye_protocol.LoginResponse, req *gotye_protocol.LoginRequ
 	} else {
 		logger.Warn("UserLogin failed. account=", req.Account, ", pwd=", req.Passwd)
 	}
-}
-
-func UserRegister(resp *gotye_protocol.RegisterResponse, req *gotye_protocol.RegisterRequest) {
-	if DBIsAccountExists(req.Account) {
-		resp.SetStatus(gotye_protocol.API_ACCOUNT_EXISTS_ERROR)
-		logger.Info("UserRegister : account = ", req.Account, " is exists.")
-		return
-	}
-
-	if DBIsPhoneExists(req.Phone) {
-		resp.SetStatus(gotye_protocol.API_PHONE_EXISTS_ERROR)
-		logger.Info("UserRegister : phone = ", req.Phone, " is exists.")
-		return
-	}
-
-	if DBIsEmailExists(req.Email) {
-		resp.SetStatus(gotye_protocol.API_EMAIL_EXISTS_ERROR)
-		logger.Info("UserRegister : email = ", req.Email, " is exists.")
-		return
-	}
-
-	user_id := DBCreateUserAccount(req.Account, req.Phone, req.Email, req.Password)
-	if user_id < 0 {
-		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
-		logger.Warn("UserRegister : create user error!")
-		return
-	}
-
-	resp.SetStatus(gotye_protocol.API_SUCCESS)
-	logger.Info("UserRegister : Success. account=", req.Account, ",phone=", req.Phone, ",email=", req.Email)
 }
 
 func UserInfoModify(resp *gotye_protocol.ModifyUserInfoResponse, req *gotye_protocol.ModifyUserInfoRequest) {

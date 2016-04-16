@@ -2,11 +2,12 @@
 package gotye_sdk
 
 var (
-	HttpDomain         = "https://livevip.com.cn/liveApi/"
-	HttpUrlAccessToken = HttpDomain + "AccessToken"
-	HttpUrlCreateRoom  = HttpDomain + "CreateRoom"
-	HttpUrlModifyRoom  = HttpDomain + "ModifyRoom"
-	HttpGetLiveContext = HttpDomain + "GetLiveContext"
+	HttpDomain           = "https://livevip.com.cn/liveApi/"
+	HttpUrlAccessToken   = HttpDomain + "AccessToken"
+	HttpUrlCreateRoom    = HttpDomain + "CreateRoom"
+	HttpUrlModifyRoom    = HttpDomain + "ModifyRoom"
+	HttpGetLiveContext   = HttpDomain + "GetLiveContext"
+	HttpGetRoomsLiveInfo = HttpDomain + "GetRoomsLiveInfo"
 )
 
 type AccessTokenAppRequest struct {
@@ -52,7 +53,7 @@ type CreateRoomResponse struct {
 }
 
 type CreateRoomEntity struct {
-	RoomId      int64  `json:"roomId"`
+	RoomId      int64  `json:"roomId"`      //live room id
 	AppUserId   int    `json:"appUserId"`   //app  id
 	RoomName    string `json:"roomName"`    //主播室名称
 	AnchorPwd   string `json:"anchorPwd"`   //主播密码
@@ -94,4 +95,22 @@ type GetLiveContextResponse struct {
 type LiveContext struct {
 	RecordingStatus int `json:"recordingStatus"`
 	PlayUserCount   int `josn:"playUserCount"`
+}
+
+type GetRoomsLiveInfoRequest struct {
+	RoomIds []int64 `json:"roomIds"`
+}
+
+type GetRoomsLiveInfoResponse struct {
+	ApiResponse
+	Entities []LiveRoomInfo `json:"entities"`
+}
+
+type LiveRoomInfo struct {
+	RoomId        int64    `json:"roomId"`
+	PlayUserCount int      `json:"playUserCount"`
+	StreamStatus  int      `json:"streamStatus"`
+	PlayRtmpUrls  []string `json:"playRtmpUrls"`
+	PlayHlsUrls   []string `json:"playHlsUrls"`
+	PlayFlvUrls   []string `json:"playFlvUrls"`
 }

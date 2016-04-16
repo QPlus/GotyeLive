@@ -22,7 +22,7 @@ func (r *ApiResponse) SetStatus(status int) {
 
 func (r *ApiResponse) SetFormatStatus(status int, val string) {
 	r.Status = status
-	r.Desc = fmt.Sprintf("%s %s", ApiStatus[r.Status], val)
+	r.Desc = fmt.Sprintf("%s", val)
 }
 
 //func CheckAuthValid(sessionId, accessToken string, vResponse *ApiResponse) (userId int, valid bool) {

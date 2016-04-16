@@ -27,6 +27,11 @@ func DBCheckUserAccount(username, password string) (userId, headPicId int64, acc
 		return
 	}
 
+	if len(pwd) == 0 && len(password) == 0 {
+		status_code = gotye_protocol.API_SUCCESS
+		return
+	}
+
 	if pwd != util.Md5Hash(password) {
 		logger.Infof("DBCheckUserAccount : %s password error", username)
 		status_code = gotye_protocol.API_LOGIN_PASSWORD_ERROR
@@ -82,10 +87,10 @@ func DBIsEmailExists(email string) bool {
 }
 
 //create new user
-func DBCreateUserAccount(account, email, phone, pwd string) int64 {
+func DBCreateUserAccount(phone, passwd string) int64 {
 	db := SP_MysqlDbPool.GetDBConn()
-	res, err := db.Exec("INSERT INTO tbl_users(account,phone,email,nickname,pwd) VALUES(?,?,?,?,?)",
-		account, email, phone, account, util.Md5Hash(pwd))
+	res, err := db.Exec("INSERT INTO tbl_users(account,phone,nickname,pwd) VALUES(?,?,?,?)",
+		phone, phone, phone, util.Md5Hash(passwd))
 	if err != nil {
 		logger.Error("DBCreateUserAccount : ", err.Error())
 		return -1

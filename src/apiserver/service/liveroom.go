@@ -44,73 +44,35 @@ func CreateLiveRoom(resp *gotye_protocol.CreateLiveRoomResponse,
 	}
 
 	// create live room
-	var (
-		err      error
-		apptoken string
-		result   *gotye_sdk.CreateRoomResponse
-	)
-
-sucLoop:
-	for i := 0; i < 2; i++ {
-		apptoken, err = GotyeAccessAppToken()
-		if err != nil {
-			logger.Error("CreateLiveRoom : AccessToken Failed, ", err.Error())
-			goto errLoop
-		}
-
-		result, err = GotyeCreateRoom(apptoken,
-			req.LiveRoomName,
-			req.LiveAnchorPwd,
-			req.LiveAssistPwd,
-			req.LiveUserPwd,
-			req.LiveRoomDesc,
-			req.LiveRoomTopic)
-		if err != nil {
-			logger.Error("CreateLiveRoom : create room error=", err.Error())
-			goto errLoop
-		}
-
-		switch result.Status {
-		case gotye_sdk.API_SUCCESS:
-			logger.Info("CreateLiveRoom : success create liveroom_id= ", result.Entity.RoomId)
-			break sucLoop
-
-		case gotye_sdk.API_INVALID_TOKEN_ERROR:
-			if i == 0 {
-				GotyeClearAccessToken()
-				logger.Info("CreateLiveRoom : invalid token error, and accesstoken again.")
-			} else {
-				logger.Error("CreateLiveRoom : why access new token, but return invalid")
-				goto errLoop
-			}
-
-		default:
-			logger.Error("CreateLiveRoom : create room status=%d", result.Status)
-			goto errLoop
-		}
+	result, err := GotyeCreateRoom(req.LiveRoomName, req.LiveAnchorPwd, req.LiveAssistPwd,
+		req.LiveUserPwd, req.LiveRoomDesc, req.LiveRoomTopic)
+	if err != nil {
+		logger.Error("CreateLiveRoom : create room error=", err.Error())
+		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
+		return
 	}
+	if result.Status != gotye_sdk.API_SUCCESS {
+		logger.Error("CreateLiveRoom : failed, status=", result.Status)
+		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
+		return
+	}
+	//get live room play urls.
+	playRtmpUrl, playHlsUrl, playFlvUrl := GotyeGetLiveroomUrl(result.Entity.RoomId)
 
-	err = DBCreateLiveroom(sd.user_id,
-		result.Entity.RoomId,
-		result.Entity.RoomName,
-		result.Entity.AnchorDesc,
-		result.Entity.ContentDesc,
-		result.Entity.AnchorPwd,
-		result.Entity.AssistPwd,
-		result.Entity.UserPwd)
+	//insert to tbl_liverooms
+	err = DBCreateLiveroom(sd.user_id, result.Entity.RoomId, result.Entity.RoomName, result.Entity.AnchorDesc,
+		result.Entity.ContentDesc, result.Entity.AnchorPwd, result.Entity.AssistPwd, result.Entity.UserPwd,
+		playRtmpUrl, playHlsUrl, playFlvUrl)
 	if err != nil {
 		logger.Error("CreateLiveRoom : ", err.Error())
-		goto errLoop
-	} else {
-		sd.liveroom_id = result.Entity.RoomId
-		resp.LiveRoomId = result.Entity.RoomId
-		resp.SetStatus(gotye_protocol.API_SUCCESS)
+		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
 		return
 	}
 
-errLoop:
-	resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
-	return
+	sd.liveroom_id = result.Entity.RoomId
+	resp.LiveRoomId = result.Entity.RoomId
+	resp.SetStatus(gotye_protocol.API_SUCCESS)
+	logger.Info("CreateLiveRoom : success create liveroom_id= ", result.Entity.RoomId)
 }
 
 func ModifyMyLiveRoom(resp *gotye_protocol.ModifyMyLiveRoomResponse,
@@ -134,77 +96,57 @@ func ModifyMyLiveRoom(resp *gotye_protocol.ModifyMyLiveRoomResponse,
 		return
 	}
 
-sucLoop:
-	for i := 0; i < 2; i++ {
-		apptoken, err := GotyeAccessAppToken()
-		if err != nil {
-			logger.Error("ModifyMyLiveRoom : AccessToken Failed, ", err.Error())
-			resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
-			return
-		}
+	status := GotyeModifyRoom(req.LiveRoomID, req.LiveRoomName,
+		req.LiveRoomAnchorPwd, DefaultAssistPwd, req.LiveUserPwd, req.LiveRoomDesc, req.LiveRoomTopic)
 
-		status := GotyeModifyRoom(apptoken, req.LiveRoomID, req.LiveRoomName,
-			req.LiveRoomAnchorPwd, DefaultAssistPwd, req.LiveUserPwd, req.LiveRoomDesc, req.LiveRoomTopic)
-
-		switch status {
-		case gotye_sdk.API_SUCCESS:
+	switch status {
+	case gotye_sdk.API_SUCCESS:
+		{
 			logger.Info("ModifyMyLiveRoom : success modify liveroom_id= .", req.LiveRoomID)
-			break sucLoop
-
-		case gotye_sdk.API_INVALID_TOKEN_ERROR:
-			if i == 0 {
-				GotyeClearAccessToken()
-				logger.Info("ModifyMyLiveRoom : invalid token error, and accesstoken again.")
-			} else {
-				logger.Error("ModifyMyLiveRoom : why access new token, but return invalid")
+			err := DBModifyLiveRoomInfo(req.LiveRoomID, req.LiveRoomName, req.LiveRoomAnchorPwd, DefaultAssistPwd,
+				req.LiveUserPwd, req.LiveRoomDesc, req.LiveRoomTopic)
+			if err != nil {
+				logger.Error("ModifyLiveRoom : ", err.Error())
 				resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
 				return
 			}
-
-		case gotye_sdk.API_INVALID_LIVEROOM_ID_ERROR:
-			fallthrough
-		case gotye_sdk.API_NOT_EXISTS_LIVEROOM_ID_ERROR:
-			logger.Error("ModifyMyLiveRoom : invalid liveroom_id =", req.LiveRoomID)
-			resp.SetStatus(gotye_protocol.API_LIVEROOM_ID_NOT_EXIST_ERROR)
-			return
-
-		case gotye_sdk.API_REPECT_PASSWORD_LIVEROOM_ERROR:
-			logger.Error("ModifyMyLiveRoom : repect anchor pwd =", req.LiveRoomAnchorPwd)
-			resp.SetStatus(gotye_protocol.API_REPECT_PASSWORD_LIVEROOM_ERROR)
-			return
-
-		case gotye_sdk.API_INVALID_PASSWORD_LIVEROOM_ERROR:
-			logger.Error("ModifyMyLiveRoom : invalid password =", req.LiveRoomAnchorPwd)
-			resp.SetStatus(gotye_protocol.API_INVALID_PASSWORD_LIVEROOM_ERROR)
-			return
-
-		case gotye_sdk.API_INVALID_LIVEROOM_NAME_ERROR:
-			logger.Error("ModifyMyLiveRoom : invalid roomName =", req.LiveRoomName)
-			resp.SetStatus(gotye_protocol.API_INVALID_LIVEROOM_NAME_ERROR)
-			return
-
-		case gotye_sdk.API_NULL_LIVEROOM_ID_ERROR:
-			logger.Error("ModifyMyLiveRoom : why null liveroom id =", req.LiveRoomID)
-			resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
-			return
-
-		default:
-			logger.Error("CreateLiveRoom : unknown status=%d", status)
-			resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
+			logger.Info("ModifyLiveRoom : Success.")
+			resp.SetStatus(gotye_protocol.API_SUCCESS)
 			return
 		}
-	}
 
-	err := DBModifyLiveRoomInfo(req.LiveRoomID, req.LiveRoomName, req.LiveRoomAnchorPwd, DefaultAssistPwd,
-		req.LiveUserPwd, req.LiveRoomDesc, req.LiveRoomTopic)
-	if err != nil {
-		logger.Error("ModifyLiveRoom : ", err.Error())
+	case gotye_sdk.API_INVALID_LIVEROOM_ID_ERROR:
+		fallthrough
+	case gotye_sdk.API_NOT_EXISTS_LIVEROOM_ID_ERROR:
+		logger.Error("ModifyMyLiveRoom : invalid liveroom_id =", req.LiveRoomID)
+		resp.SetStatus(gotye_protocol.API_LIVEROOM_ID_NOT_EXIST_ERROR)
+		return
+
+	case gotye_sdk.API_REPECT_PASSWORD_LIVEROOM_ERROR:
+		logger.Error("ModifyMyLiveRoom : repect anchor pwd =", req.LiveRoomAnchorPwd)
+		resp.SetStatus(gotye_protocol.API_REPECT_PASSWORD_LIVEROOM_ERROR)
+		return
+
+	case gotye_sdk.API_INVALID_PASSWORD_LIVEROOM_ERROR:
+		logger.Error("ModifyMyLiveRoom : invalid password =", req.LiveRoomAnchorPwd)
+		resp.SetStatus(gotye_protocol.API_INVALID_PASSWORD_LIVEROOM_ERROR)
+		return
+
+	case gotye_sdk.API_INVALID_LIVEROOM_NAME_ERROR:
+		logger.Error("ModifyMyLiveRoom : invalid roomName =", req.LiveRoomName)
+		resp.SetStatus(gotye_protocol.API_INVALID_LIVEROOM_NAME_ERROR)
+		return
+
+	case gotye_sdk.API_NULL_LIVEROOM_ID_ERROR:
+		logger.Error("ModifyMyLiveRoom : why null liveroom id =", req.LiveRoomID)
+		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
+		return
+
+	default:
+		logger.Error("CreateLiveRoom : unknown status=%d", status)
 		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
 		return
 	}
-	logger.Info("ModifyLiveRoom : Success.")
-	resp.SetStatus(gotye_protocol.API_SUCCESS)
-	return
 }
 
 func FollowLiveRoom(sessionId string, liveRoomId int64, isFollow int) int {
@@ -263,17 +205,28 @@ func GetMyLiveRoom(resp *gotye_protocol.GetMyLiveRoomResponse, req *gotye_protoc
 		return
 	}
 
-	resp.LiveRoomId,
-		resp.LiveRoomName,
-		resp.LiveRoomDesc,
-		resp.LiveRoomTopic,
-		resp.LiveAnchorPwd,
-		resp.LiveUserPwd,
-		ok = DBGetLiveRoomByUserId(sd.user_id)
+	liveroomInfo, ok := DBGetLiveRoomByUserId(sd.user_id)
 	if !ok {
 		logger.Warnf("GetMyLiveRoom : why get user_id=%d liveroom_id=%d failed.", sd.user_id, sd.liveroom_id)
 		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
 		return
+	}
+
+	resp.LiveRoomId = liveroomInfo.LiveRoomId
+	resp.LiveAnchorPwd = liveroomInfo.LiveAnchorPwd
+	resp.LiveUserPwd = liveroomInfo.LiveUserPwd
+	resp.LiveRoomName = liveroomInfo.LiveRoomName
+	resp.LiveRoomDesc = liveroomInfo.LiveRoomDesc
+	resp.LiveRoomTopic = liveroomInfo.LiveRoomTopic
+	resp.AnchorName = liveroomInfo.AnchorName
+	resp.PlayRtmpUrl = liveroomInfo.PlayRtmpUrl
+	resp.PlayHlsUrl = liveroomInfo.PlayHlsUrl
+	resp.PlayFlvUrl = liveroomInfo.PlayFlvUrl
+
+	if resp.PlayRtmpUrl == "" || resp.PlayHlsUrl == "" || resp.PlayFlvUrl == "" {
+		logger.Warn("GetMyLiveRoom : url is nil")
+		resp.PlayRtmpUrl, resp.PlayHlsUrl, resp.PlayFlvUrl = GotyeGetLiveroomUrl(resp.LiveRoomId)
+		DBUpdateLiveroomUrls(resp.LiveRoomId, resp.PlayRtmpUrl, resp.PlayHlsUrl, resp.PlayFlvUrl)
 	}
 
 	resp.FollowCount = DBGetFollowCount(sd.liveroom_id)

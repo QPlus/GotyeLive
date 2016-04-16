@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	HeartBeatTimeOut  = time.Hour * 1
-	PreCheckSessionId = time.Minute * 30
+	HeartBeatTimeOut  = time.Hour
+	PreCheckSessionId = time.Minute
 )
 
 type sessionManager struct {

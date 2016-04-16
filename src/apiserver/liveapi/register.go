@@ -30,31 +30,19 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		goto end
 	}
 
-	if len(req.Account) == 0 {
-		logger.Warn("Register : account is null. ", string(readdata))
-		resp.SetFormatStatus(gotye_protocol.API_PARAM_ERROR, "account is null.")
-		goto end
-	}
-
-	if len(req.Phone) == 0 || !util.CheckPhone(req.Phone) {
+	if !util.CheckPhone(req.Phone) {
 		logger.Warn("Register : phone is null. ", string(readdata))
-		resp.SetFormatStatus(gotye_protocol.API_PARAM_ERROR, "phone invalid.")
+		resp.SetFormatStatus(gotye_protocol.API_PARAM_ERROR, "手机号码不存在")
 		goto end
 	}
 
-	if len(req.Email) == 0 || !util.ChechEmail(req.Email) {
-		logger.Warn("Register : email is null. ", string(readdata))
-		resp.SetFormatStatus(gotye_protocol.API_PARAM_ERROR, "email invalid.")
+	if len(req.Passwd) < 6 {
+		logger.Warn("Register : pwd length less 6, =", req.Passwd)
+		resp.SetFormatStatus(gotye_protocol.API_PARAM_ERROR, "密码小于6位")
 		goto end
 	}
 
-	if len(req.Password) < 6 {
-		logger.Warn("Register : pwd so short ", string(readdata))
-		resp.SetFormatStatus(gotye_protocol.API_PARAM_ERROR, "pwd so short.")
-		goto end
-	}
-
-	logger.Info("Register : account=", req.Account, ",phone=", req.Phone, ",email=", req.Email)
+	logger.Info("Register : phone=", req.Phone)
 	service.UserRegister(&resp, &req)
 
 end:

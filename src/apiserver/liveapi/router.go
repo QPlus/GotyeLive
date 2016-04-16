@@ -18,6 +18,7 @@ func StartHttpServer(host string, port int) {
 	httpSvc.HandleFunc("/live/ModifyUserHeadPic", httplib.MakeHandler(ModifyUserHeadPic))
 	httpSvc.HandleFunc("/live/ModifyUserPwd", httplib.MakeHandler(ModifyUserPwd))
 	httpSvc.HandleFunc("/live/GetUserHeadPic", httplib.MakeHandler(GetUserHeadPic))
+	httpSvc.HandleFunc("/live/AuthCode", httplib.MakeHandler(AuthCode))
 
 	//my live room
 	httpSvc.HandleFunc("/live/CreateLiveRoom", httplib.MakeHandler(CreateLiveRoom))

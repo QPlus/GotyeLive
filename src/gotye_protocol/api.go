@@ -5,7 +5,7 @@ package gotye_protocol
 //api : /live/Login
 /*
 {
-    "account" : "zhangsan"/"example@com.cn"/"",
+    "account" : "zhangsan"/"13512324432",
     "password": "123456"
 }
 */
@@ -35,20 +35,38 @@ type LoginResponse struct {
 	Sex        int8   `json:"sex"` //1:male, 2: female
 }
 
+//api : /live/AuthCode
+/*
+{
+    "phone"    : "13512023289",
+}
+*/
+type AuthCodeRequest struct {
+	Phone string `json:"phone"`
+}
+
+/*
+{
+    "access"   : "/live/AuthCode"
+    "status"   :
+    "desc"     :
+}
+*/
+type AuthCodeResponse struct {
+	ApiResponse
+}
+
 //api : /live/Register
 /*
 {
-    "account" : "zhangsan",
     "phone"    : "13512023289",
-    "email"    : "example@gotye.com.cn"
-    "password" : "123456"
+    "authCode" : "",
 }
 */
 type RegisterRequest struct {
-	Account  string `json:"account"`
 	Phone    string `json:"phone"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Passwd   string `json:"password"`
+	AuthCode string `json:"authCode"`
 }
 
 /*
@@ -226,6 +244,9 @@ type LiveRoomInfo struct {
 	IsFollow      int8   `json:"isFollow"` //1 : 关注, 0: 未关注
 	FollowCount   int    `json:"followCount"`
 	PlayerCount   int    `json:"playerCount"`
+	PlayRtmpUrl   string `json:"playRtmpUrl"`
+	PlayHlsUrl    string `json:"playHlsUrl"`
+	PlayFlvUrl    string `json:"playFlvUrl"`
 }
 
 //api : /live/GetMyLiveRoomId
