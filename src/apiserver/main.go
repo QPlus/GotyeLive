@@ -26,6 +26,8 @@ func main() {
 	mysql_passwd := iniconf.GetString("mysql.password")
 	service.InitMysqlDbPool(mysql_addr, mysql_dbname, mysql_account, mysql_passwd)
 
+	service.ReloadOnlineLiverooms()
+
 	//start http server.
 	//server_ip := iniconf.GetString("apiserver.server_ip", "*")
 	http_port, _ := iniconf.GetInt("apiserver.http_port", 80)

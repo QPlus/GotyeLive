@@ -34,19 +34,18 @@ func UserRegister(resp *gotye_protocol.RegisterResponse, req *gotye_protocol.Reg
 }
 
 func UserLogin(resp *gotye_protocol.LoginResponse, req *gotye_protocol.LoginRequest) {
-	user_id, headPicId, account, nickname, sex, status_code := DBCheckUserAccount(req.Account, req.Passwd)
+	user_id, headPicId, nickname, sex, status_code := DBCheckUserAccount(req.Account, req.Passwd)
 
 	resp.SetStatus(status_code)
 	if status_code == gotye_protocol.API_SUCCESS {
-		resp.Account = account
 		resp.NickName = nickname
 		resp.LiveRoomID = DBGetLiveroomIdByUserId(user_id)
 		resp.HeadPicId = headPicId
 		resp.Sex = sex
 
 		//判断是否已经登录过.
-		resp.SessionID = SP_sessionMgr.addSession(user_id, resp.LiveRoomID, resp.Account, resp.NickName)
-		logger.Info("UserLogin success. account=", resp.Account, ", nickname=", resp.NickName)
+		resp.SessionID = SP_sessionMgr.addSession(user_id, resp.LiveRoomID, resp.NickName)
+		logger.Info("UserLogin success nickname=", resp.NickName)
 	} else {
 		logger.Warn("UserLogin failed. account=", req.Account, ", pwd=", req.Passwd)
 	}
@@ -61,11 +60,23 @@ func UserInfoModify(resp *gotye_protocol.ModifyUserInfoResponse, req *gotye_prot
 	}
 	sd.UpdateTick()
 
-	err := DBModifyUserInfo(sd.user_id, req.NickName, req.Sex, req.Address)
-	if err != nil {
-		resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
-		return
+	var err error
+	if (req.Sex == 1 || req.Sex == 2) || len(req.Address) > 0 {
+		if err = DBModifyUserInfo(sd.user_id, req.Sex, req.Address); err != nil {
+			resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
+			logger.Warn("UserInfoModify : user_id=", sd.user_id, ", sex=", req.Sex, ", addr=", req.Address)
+			return
+		}
 	}
+
+	if len(req.NickName) > 0 {
+		if err = DBModifyUserNickName(sd.user_id, req.NickName); err != nil {
+			resp.SetStatus(gotye_protocol.API_USERNAME_EXISTS_ERROR)
+			logger.Warn("UserInfoModify : user_id=", sd.user_id, ", nickname=", req.NickName)
+			return
+		}
+	}
+	logger.Info("UserInfoModify : user_id=", sd.user_id, ", nickname=", req.NickName, ", sex=", req.Sex, ", address=", req.Address)
 	resp.SetStatus(gotye_protocol.API_SUCCESS)
 }
 

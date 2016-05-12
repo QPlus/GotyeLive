@@ -136,6 +136,32 @@ func DBGetFollowCount(liveRoomId int64) (count int) {
 	return
 }
 
+func DBReloadOnlineLiveroom() *[]onlineLiveroom {
+	db := SP_MysqlDbPool.GetDBConn()
+	rows, err := db.Query("SELECT liveroom_id, player_num, need_up FROM tbl_online_liverooms")
+	if err != nil {
+		logger.Error("DBReloadOnlineLiveroom : query err=", err.Error())
+		return nil
+	}
+	defer rows.Close()
+
+	var (
+		rooms []onlineLiveroom
+		room  onlineLiveroom
+	)
+
+	for rows.Next() {
+		err = rows.Scan(&room.liveroomId, &room.playerNum, &room.needup)
+		if err != nil {
+			logger.Error("DBReloadOnlineLiveroom : scan err=", err.Error())
+			return nil
+		}
+		logger.Debug("DBReloadOnlineLiveroom : liveroomId=", room.liveroomId, ",playnum=", room.playerNum)
+		rooms = append(rooms, room)
+	}
+	return &rooms
+}
+
 func DBAddOnlineLiveRoom(liveRoomId int64) error {
 	db := SP_MysqlDbPool.GetDBConn()
 	result, err := db.Exec("INSERT INTO tbl_online_liverooms(liveroom_id) VALUES(?)", liveRoomId)
@@ -233,13 +259,13 @@ func DBGetAllLiveRoomList(resp *gotye_protocol.GetAllLiveRoomListResponse, lastI
 	)
 
 	if lastIndex == 0 {
-		rows, err = db.Query(`SELECT b.id, b.player_num, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
+		rows, err = db.Query(`SELECT b.id, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
          a.anchor_pwd, a.user_pwd, a.play_rtmp_urls, a.play_hls_urls, a.play_flv_urls, c.nickname, c.headpic_id
         FROM tbl_liverooms a INNER JOIN tbl_online_liverooms b INNER JOIN tbl_users c 
         ON a.liveroom_id=b.liveroom_id AND a.user_id=c.user_id 
         ORDER BY b.pushing_time DESC LIMIT ?`, count)
 	} else {
-		rows, err = db.Query(`SELECT b.id, b.player_num, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
+		rows, err = db.Query(`SELECT b.id, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
          a.anchor_pwd, a.user_pwd, a.play_rtmp_urls, a.play_hls_urls, a.play_flv_urls, c.nickname, c.headpic_id
         FROM tbl_liverooms a INNER JOIN tbl_online_liverooms b INNER JOIN tbl_users c 
         ON a.liveroom_id=b.liveroom_id AND a.user_id=c.user_id 
@@ -254,7 +280,7 @@ func DBGetAllLiveRoomList(resp *gotye_protocol.GetAllLiveRoomListResponse, lastI
 	lastId := lastIndex
 	for rows.Next() {
 		var info gotye_protocol.LiveRoomInfo
-		if err = rows.Scan(&lastId, &info.PlayerCount, &info.LiveRoomId, &info.LiveRoomName, &info.LiveRoomDesc,
+		if err = rows.Scan(&lastId, &info.LiveRoomId, &info.LiveRoomName, &info.LiveRoomDesc,
 			&info.LiveRoomTopic, &info.LiveAnchorPwd, &info.LiveUserPwd, &info.PlayRtmpUrl, &info.PlayHlsUrl,
 			&info.PlayFlvUrl, &info.AnchorName, &info.HeadPicId); err != nil {
 			logger.Error("DBGetAllLiveRoomList : ", err.Error())
@@ -283,14 +309,14 @@ func DBGetOnlineFocusLiveRoomList(
 	)
 
 	if lastIndex == 0 {
-		rows, err = db.Query(`SELECT b.id, b.player_num, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
+		rows, err = db.Query(`SELECT b.id, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
          a.anchor_pwd, a.user_pwd, a.play_rtmp_urls, a.play_hls_urls, a.play_flv_urls, c.nickname, c.headpic_id
         FROM tbl_liverooms a INNER JOIN tbl_online_liverooms b INNER JOIN tbl_users c 
         ON a.liveroom_id=b.liveroom_id AND a.user_id=c.user_id 
         WHERE a.liveroom_id IN (SELECT liveroom_id FROM tbl_follow_liverooms WHERE user_id=?)
         ORDER BY b.pushing_time DESC LIMIT ?`, userId, count)
 	} else {
-		rows, err = db.Query(`SELECT b.id, b.player_num, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
+		rows, err = db.Query(`SELECT b.id, a.liveroom_id, a.liveroom_name, a.liveroom_desc, a.liveroom_topic,
          a.anchor_pwd, a.user_pwd, a.play_rtmp_urls, a.play_hls_urls, a.play_flv_urls, c.nickname, c.headpic_id 
         FROM tbl_liverooms a INNER JOIN tbl_online_liverooms b INNER JOIN tbl_users c 
         ON a.liveroom_id=b.liveroom_id AND a.user_id=c.user_id 
@@ -306,7 +332,7 @@ func DBGetOnlineFocusLiveRoomList(
 	lastId := lastIndex
 	for rows.Next() {
 		var info gotye_protocol.LiveRoomInfo
-		if err = rows.Scan(&lastId, &info.PlayerCount, &info.LiveRoomId, &info.LiveRoomName, &info.LiveRoomDesc,
+		if err = rows.Scan(&lastId, &info.LiveRoomId, &info.LiveRoomName, &info.LiveRoomDesc,
 			&info.LiveRoomTopic, &info.LiveAnchorPwd, &info.LiveUserPwd, &info.PlayRtmpUrl, &info.PlayHlsUrl,
 			&info.PlayFlvUrl, &info.AnchorName, &info.HeadPicId); err != nil {
 			logger.Error("DBGetAllLiveRoomList : ", err.Error())
@@ -395,6 +421,7 @@ func DBUpdateLiveroomUrls(liveroomId int64, playRtmpUrls, playHlsUrls, playFlvUr
 
 func DBGetLiveroomUrls(liveroomId int64) (playRtmpUrls, playHlsUrls, playFlvUrls string) {
 	db := SP_MysqlDbPool.GetDBConn()
+
 	err := db.QueryRow("SELECT play_rtmp_urls, play_hls_urls, play_flv_urls FROM tbl_liverooms WHERE liveroom_id=?",
 		liveroomId).Scan(&playRtmpUrls, &playHlsUrls, &playFlvUrls)
 
@@ -402,7 +429,33 @@ func DBGetLiveroomUrls(liveroomId int64) (playRtmpUrls, playHlsUrls, playFlvUrls
 		logger.Error("DBGetLiveroomUrls : ", err.Error())
 		return
 	}
+
 	logger.Info("DBGetLiveroomUrls : success. liveroomId=", liveroomId, ", playRtmpUrls=", playRtmpUrls,
 		", playHlsUrls=", playHlsUrls, ", playFlvUrls=", playFlvUrls)
 	return
+}
+
+func DBGetLiveroomIds() []int64 {
+	db := SP_MysqlDbPool.GetDBConn()
+	rows, err := db.Query("SELECT liveroom_id FROM tbl_liverooms")
+	if err != nil {
+		logger.Error("DBGetLiveroomIds : query err=", err.Error())
+		return nil
+	}
+	defer rows.Close()
+
+	var (
+		liveroomId  int64
+		liveroomIds []int64
+	)
+
+	for rows.Next() {
+		err = rows.Scan(&liveroomId)
+		if err != nil {
+			logger.Error("DBGetLiveroomIds : scan err=", err.Error())
+			return nil
+		}
+		liveroomIds = append(liveroomIds, liveroomId)
+	}
+	return liveroomIds
 }

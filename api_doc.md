@@ -17,14 +17,13 @@
 
 |返回码                      |描述          |值   |备注      |
 |----------------------------|--------------|-----|----------|
-|API_ACCOUNT_NOT_EXISTS_ERROR|"账号不存在"  |10100|登录时    |
-|API_LOGIN_PASSWORD_ERROR    |"登录密码错误"|10101|登录时    |
-|API_ACCOUNT_EXISTS_ERROR	 |"账号已注册"	|10102|注册时    |
+|API_USERNAME_NOT_EXISTS_ERROR|"用户名不存在"  |10100|登录时    |
+|API_USERNAME_EXISTS_ERROR	 |"用户名已使用"	|10101|注册时    |
+|API_LOGIN_PASSWORD_ERROR    |"登录密码错误"|10102|登录时    |
 |API_PHONE_EXISTS_ERROR		 |"手机已注册"  |10103|注册时    |
 |API_PHONE_NOT_EXISTS_ERROR  |"手机不存在"  |10104|修改密码时|
-|API_EMAIL_EXISTS_ERROR      |"邮箱已注册"  |10105|注册时    |
-|API_EMAIL_NOT_EXISTS_ERROR  |"邮箱不存在"	|10106|暂时未用  |
-
+|API_AUTHCODE_ERROR          |"验证码错误"  |10105|注册or找回密码时|
+ 
 ####b. 直播室相关
 
 |返回码                             |描述            |值   |备注               |
@@ -40,6 +39,13 @@
 |返回码		              |描述          |值   |备注  						 |
 |-------------------------|--------------|-----|-----------------------------|
 |API_DECODE_HEAD_PIC_ERROR|"头像解码错误"|10300|base64解压头像时,一般不会发生|
+
+####d. 支付相关
+|返回码		              |描述          |值   |备注  		|
+|-------------------------|--------------|-----|------------|
+|API_CHARGE_RMB_ERROR     |"支付系统异常"|10400|充值人民币时|
+|API_LACK_OF_BALANCE_ERROR|"账户余额不足"|10401|送礼物时    |
+
 
 
 ##请求回复说明
@@ -90,7 +96,6 @@ response
     "access"     : "/live/Login"
     "status"     :
     "desc"       :
-    "account"    : "zhangsan"
     "nickName"   : "aaaaaa"
     "liveRoomId" : 如果这个用户有liveRoomId,就返回，如果没有返回0
     "sessionId"  : (32个字节的字符串)
@@ -100,14 +105,28 @@ response
 ```
 
 ```
+获取验证码API : /live/AuthCode
+request
+{
+    "phone"    : "13512023289",
+}
+
+response
+{
+    "access"   : "/live/AuthCode"
+    "status"   :
+    "desc"     :
+}
+```
+
+```
 用户注册API : /live/Register
 
 request
 {
-    "account"  : "zhangsan",
     "phone"    : "13512023289",
-    "email"    : "example@qq.com"
     "password" : "123456"
+    "authCode" : "123456",
 }
 
 response
@@ -402,6 +421,62 @@ response
 }
 ```
 
+```
+充值API: /pay/ChargeRMB
+
+request
+{
+    "sessionId"：   
+	"rmb"       : 整型，最少1元，充值单位是元
+}
+
+response
+{
+    "access"   : "/pay/ChargeRMB"
+    "status"   : API_CHARGE_RMB_ERROR(10400)
+    "desc"     :
+    "qinCoin"  : 返回剩余多少亲元
+}
+```
+
+```
+支付亲元API(送礼物): /pay/PayQinCoin
+
+request
+{
+    "sessionId"     :   
+	"qinCoin"       : 支付亲元
+	"anchorAccount" : 主播用户名
+}
+
+response
+{
+    "access"   : "/pay/PayQinCoin"
+    "status"   : API_LACK_OF_BALANCE_ERROR(10401) 账户余额不足
+    "desc"     :
+    "qinCoin"  : 返回剩余多少亲元
+}
+```
+
+```
+获取自己账户信息API: /pay/GetPayAccount
+
+request
+{
+    "sessionId" :   
+}
+
+response
+{
+    "access"  : "/pay/GetPayAccount"
+    "status"  : 
+    "desc"    :
+    "qinCoin" : 剩余亲元
+	"jiaCoin" : 收入加元
+	"level"   : 用户等级
+	"xp"      : 用户经验值
+}
+```
 
 ###b. GET method API
 
@@ -421,7 +496,3 @@ response
 		"desc"  : "参数错误"
 	}
 ```
-
-
-
-

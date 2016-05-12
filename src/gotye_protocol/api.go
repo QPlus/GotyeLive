@@ -27,7 +27,6 @@ type LoginRequest struct {
 */
 type LoginResponse struct {
 	ApiResponse
-	Account    string `json:"account"`
 	NickName   string `json:"nickName"`
 	LiveRoomID int64  `json:"liveRoomId"`
 	SessionID  string `json:"sessionId"`
@@ -60,6 +59,7 @@ type AuthCodeResponse struct {
 /*
 {
     "phone"    : "13512023289",
+    "password" : "123456"
     "authCode" : "",
 }
 */
@@ -424,6 +424,38 @@ type PushLiveStreamResponse struct {
 	ApiResponse
 }
 
+/*
+api : /live/PlayLiveStream
+{
+    "sessionId"  :
+	"liveroomId" :
+	"status"     :
+}
+*/
+type PlayLiveStreamRequest struct {
+	SessionId  string `json:"sessionId"`
+	LiveroomId int64  `json:"liveroomId"`
+	Status     int    `json:"status"` //1. start, 0, stop
+}
+
+type PlayLiveStreamResponse struct {
+	ApiResponse
+}
+
+/*
+ api : /live/GetLiveroomNumber
+*/
+type GetLiveroomNumberRequest struct {
+	SessionId  string `json:"sessionId"`
+	LiveroomId int64  `json:"liveroomId"`
+}
+
+type GetLiveroomNumberResponse struct {
+	ApiResponse
+	LiveroomId int64 `json:"liveroomId"`
+	Number     int   `json:"number"`
+}
+
 //api : /live/SearchLiveStream
 type SearchLiveStreamRequest struct {
 	SessionId string `json:"sessionId"`
@@ -444,4 +476,46 @@ type GetAdLiveRoomListRequest struct {
 type GetAdLiveRoomListResponse struct {
 	ApiResponse
 	LiveRoomInfo
+}
+
+/*
+ api : /pay/ChargeRMB
+*/
+type ChargeRMBRequest struct {
+	SessionId string `json:"sessionId"`
+	RMB       int    `json:"rmb"`
+}
+
+type ChargeRMBResponse struct {
+	ApiResponse
+	QinCoin int `json:"qinCoin"`
+}
+
+/*
+ api : /pay/PayQinCoin
+*/
+type PayQinCoinRequest struct {
+	SessionId     string `json:"sessionId"`
+	QinCoin       int    `json:"qinCoin"` //支付亲元
+	AnchorAccount string `json:"anchorAccount"`
+}
+
+type PayQinCoinResponse struct {
+	ApiResponse
+	QinCoin int `json:"qinCoin"` //剩余多少亲元
+}
+
+/*
+ api : /pay/GetPayAccount
+*/
+type GetPayAccountRequest struct {
+	SessionId string `json:"sessionId"`
+}
+
+type GetPayAccountResponse struct {
+	ApiResponse
+	QinCoin int `json:"qinCoin"` //剩余亲元
+	JiaCoin int `json:"jiaCoin"` //收入加元
+	Level   int `json:"level"`   //用户等级
+	XP      int `json:"xp"`      //用户经验值
 }

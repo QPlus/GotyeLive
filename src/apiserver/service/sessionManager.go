@@ -43,7 +43,7 @@ func (sm *sessionManager) GC() {
 	time.AfterFunc(PreCheckSessionId, func() { SP_sessionMgr.GC() })
 }
 
-func (sm *sessionManager) addSession(userid int64, liveroomid int64, username string, nickName string) string {
+func (sm *sessionManager) addSession(userid, liveroomid int64, nickName string) string {
 	sm.mux.Lock()
 	defer sm.mux.Unlock()
 
@@ -51,14 +51,13 @@ func (sm *sessionManager) addSession(userid int64, liveroomid int64, username st
 		session_id:   util.UUID(),
 		user_id:      userid,
 		liveroom_id:  liveroomid,
-		account:      username,
 		nickname:     nickName,
 		tick:         time.Now(),
 		bfcousOnline: true,
 	}
 	sm.sessionMap[sd.session_id] = sd
 	logger.Info("addSession : session_id=", sd.session_id, ",user_id=", sd.user_id,
-		",liveroom_id=", sd.liveroom_id, ",account=", sd.account)
+		",liveroom_id=", sd.liveroom_id)
 	return sd.session_id
 }
 
@@ -80,7 +79,6 @@ type sessionData struct {
 	session_id   string
 	user_id      int64
 	liveroom_id  int64
-	account      string
 	nickname     string
 	tick         time.Time
 	allLastId    int64

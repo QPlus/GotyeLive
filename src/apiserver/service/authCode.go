@@ -20,7 +20,8 @@ func SendAuthCode(phone string) (string, error) {
 	v.Set("encode", "utf-8")
 
 	authCode := util.AuthCode()
-	v.Set("msg", fmt.Sprintf("%s (亲加验证码,请继续完成操作),本短信有系统自带发出,如非本人操作请忽略", authCode))
+
+	v.Set("msg", fmt.Sprintf("验证码%s,请您进行校验,请勿泄漏.", authCode))
 	req := v.Encode()
 
 	resp, err := httplib.HttpRequest("http://sms.10690221.com:9011/hy/", httplib.METHOD_GET, nil, []byte(req))
