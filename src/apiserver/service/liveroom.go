@@ -8,9 +8,9 @@ import (
 )
 
 const (
-	DefaultAnchorPwd = "openAnchor"
-	DefaultAssistPwd = "openAssist"
-	DefaultUserPwd   = "openuser"
+	DefaultAnchorPwd = "anchorpwd"
+	DefaultAssistPwd = "assistpwd"
+	DefaultUserPwd   = "userpwd"
 )
 
 func CreateLiveRoom(resp *gotye_protocol.CreateLiveRoomResponse,
@@ -200,7 +200,7 @@ func GetMyLiveRoom(resp *gotye_protocol.GetMyLiveRoomResponse, req *gotye_protoc
 	sd.UpdateTick()
 
 	if sd.liveroom_id == 0 {
-		logger.Info("GetMyLiveRoom : account=", sd.account, "not exist liveroom")
+		logger.Info("GetMyLiveRoom : nickname=", sd.nickname, "not exist liveroom")
 		resp.SetStatus(gotye_protocol.API_LIVEROOM_NOT_EXISTS_ERROR)
 		return
 	}
@@ -248,4 +248,31 @@ func GetMyLiveRoomId(resp *gotye_protocol.GetMyLiveRoomIdResponse, req *gotye_pr
 	resp.LiveRoomId = sd.liveroom_id
 	resp.SetStatus(gotye_protocol.API_SUCCESS)
 	logger.Info("GetMyLiveRoomId : user_id=%d, liveroom_id=%d.", sd.user_id, sd.liveroom_id)
+}
+
+func PlayLiveStream(sessinId string, liveroomId int64, Status int) int {
+	sd, ok := SP_sessionMgr.readSession(sessinId)
+	if !ok {
+		logger.Warn("PushingLiveStream : get session data failed.")
+		return gotye_protocol.API_EXPIRED_SESSION_ERROR
+	}
+	sd.UpdateTick()
+
+	if Status == 1 {
+		SP_onlineLiveMgr.StartPlayStream(liveroomId)
+	} else {
+		SP_onlineLiveMgr.StopPlayStream(liveroomId)
+	}
+	return gotye_protocol.API_SUCCESS
+}
+
+func GetLiveroomNumber(sessinId string, liveroomId int64) (int, int) {
+	sd, ok := SP_sessionMgr.readSession(sessinId)
+	if !ok {
+		logger.Warn("PushingLiveStream : get session data failed.")
+		return 0, gotye_protocol.API_EXPIRED_SESSION_ERROR
+	}
+	sd.UpdateTick()
+
+	return SP_onlineLiveMgr.GetPlayCount(liveroomId), gotye_protocol.API_SUCCESS
 }

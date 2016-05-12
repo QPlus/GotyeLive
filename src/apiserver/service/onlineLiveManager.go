@@ -14,14 +14,18 @@ const (
 	PreRefreshNum = 20
 )
 
+type onlineLiveroom struct {
+	liveroomId int64
+	playerNum  int
+	needup     int8
+}
+
 type OnlineLive struct {
 	liveRoomId    int64
 	tick          time.Time
 	limit         time.Duration
 	playUserCount int
-	playRtmpUrls  string
-	playHlsUrls   string
-	playFlvUrls   string
+	bUp           bool
 }
 
 type OnlineLiveManager struct {
@@ -43,6 +47,10 @@ func (om *OnlineLiveManager) GC() {
 
 	om.RLock()
 	for id, online := range om.liveMap {
+		if !online.bUp {
+			continue
+		}
+
 		if now.Sub(online.tick) > online.limit {
 			inactiveIds = append(inactiveIds, id)
 		} else {
@@ -111,35 +119,35 @@ func (om *OnlineLiveManager) UpStreamInfo(entities []gotye_sdk.LiveRoomInfo) {
 		if !ok {
 			continue
 		}
-
-		up := false
-
-		if len(entity.PlayRtmpUrls) > 0 && entity.PlayRtmpUrls[0] != online.playRtmpUrls {
-			online.playRtmpUrls = entity.PlayRtmpUrls[0]
-			up = true
-		}
-
-		if len(entity.PlayHlsUrls) > 0 && entity.PlayHlsUrls[0] != online.playHlsUrls {
-			online.playHlsUrls = entity.PlayHlsUrls[0]
-			up = true
-		}
-
-		if len(entity.PlayFlvUrls) > 0 && entity.PlayFlvUrls[0] != online.playFlvUrls {
-			online.playFlvUrls = entity.PlayFlvUrls[0]
-			up = true
-		}
-
-		if up {
-			logger.Info("UpStreamInfo : up liveroomId=", entity.RoomId)
-			DBUpdateLiveroomUrls(entity.RoomId, online.playRtmpUrls, online.playHlsUrls, online.playFlvUrls)
-		}
-
-		if entity.PlayUserCount != online.playUserCount {
-			logger.Info("UpStreamInfo : up liveroomId=", entity.RoomId, ", number=", online.playUserCount)
-			online.playUserCount = entity.PlayUserCount
-			DBUpdateOnlineLiveRoom(entity.RoomId, entity.PlayUserCount)
-		}
+		online.playUserCount = entity.PlayUserCount
+		DBUpdateOnlineLiveRoom(online.liveRoomId, online.playUserCount)
 	}
+}
+
+func (om *OnlineLiveManager) LoadOnlineLiverooms() {
+	om.Lock()
+	defer om.Unlock()
+
+	liverooms := DBReloadOnlineLiveroom()
+	if liverooms == nil {
+		logger.Info("LoadOnlineLiverooms : nil")
+		return
+	}
+
+	for _, room := range *liverooms {
+		online := &OnlineLive{}
+		online.liveRoomId = room.liveroomId
+		online.playUserCount = room.playerNum
+		online.bUp = (room.needup == 1)
+		online.limit = LimitPushTime
+		online.tick = time.Now()
+		om.liveMap[online.liveRoomId] = online
+		logger.Info("LoadOnlineLiverooms : liveroomId=", online.liveRoomId, ",limit=", online.limit.Seconds(), "s,up=", online.bUp)
+	}
+}
+
+func ReloadOnlineLiverooms() {
+	SP_onlineLiveMgr.LoadOnlineLiverooms()
 }
 
 func (om *OnlineLiveManager) StartPushStream(liveroomId int64, limit int) {
@@ -162,11 +170,11 @@ func (om *OnlineLiveManager) StartPushStream(liveroomId int64, limit int) {
 	online.tick = time.Now()
 	online.limit = limitTime
 	online.playUserCount = 0
-	online.playRtmpUrls, online.playHlsUrls, online.playFlvUrls = DBGetLiveroomUrls(liveroomId)
+	online.bUp = true
 
-	logger.Infof("StartPushStream : start liveroomId=%d,limit=%ss,playRtmpUrls=%s,playHlsUrls=%s,playFlvUrls=%s",
-		online.liveRoomId, online.limit, online.playRtmpUrls, online.playHlsUrls, online.playFlvUrls)
 	om.liveMap[liveroomId] = online
+
+	logger.Infof("StartPushStream : start liveroomId=%d,limit=%s", online.liveRoomId, online.limit)
 	DBAddOnlineLiveRoom(liveroomId)
 }
 
@@ -182,4 +190,49 @@ func (om *OnlineLiveManager) StopPushStream(liveroomId int64) {
 	logger.Info("StopPushStream : liveroomid=", liveroomId)
 	delete(om.liveMap, liveroomId)
 	DBDelOnlineLiveRoom(liveroomId)
+}
+
+func (om *OnlineLiveManager) GetPlayCount(liveroomId int64) int {
+	om.RLock()
+	defer om.RUnlock()
+
+	liveroom, ok := om.liveMap[liveroomId]
+	if !ok {
+		logger.Warn("GetPlayCount : not found liveroomid=", liveroomId)
+		return 0
+	}
+	return liveroom.playUserCount
+}
+
+func (om *OnlineLiveManager) StartPlayStream(liveroomId int64) {
+	om.Lock()
+	defer om.Unlock()
+
+	liveroom, ok := om.liveMap[liveroomId]
+	if !ok {
+		logger.Warn("StartPlayStream : not found liveroomid=", liveroomId)
+		return
+	}
+
+	liveroom.playUserCount++
+	DBUpdateOnlineLiveRoom(liveroom.liveRoomId, liveroom.playUserCount)
+
+	logger.Info("StartPlayStream : liveroomid=", liveroomId, ", playnum=", liveroom.playUserCount)
+}
+
+func (om *OnlineLiveManager) StopPlayStream(liveroomId int64) {
+	om.Lock()
+	defer om.Unlock()
+
+	liveroom, ok := om.liveMap[liveroomId]
+	if !ok {
+		logger.Warn("StopPlayStream : not found liveroomid=", liveroomId)
+		return
+	}
+
+	if liveroom.playUserCount > 0 {
+		liveroom.playUserCount--
+		DBUpdateOnlineLiveRoom(liveroom.liveRoomId, liveroom.playUserCount)
+	}
+	logger.Info("StopPlayStream : liveroomid=", liveroomId, ", playnum=", liveroom.playUserCount)
 }

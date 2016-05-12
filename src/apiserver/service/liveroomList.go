@@ -40,6 +40,7 @@ func GetAllLiveRoomList(resp *gotye_protocol.GetAllLiveRoomListResponse, req *go
 	logger.Info("GetAllLiveRoomList end allLastId=", sd.allLastId)
 	for i := range resp.List {
 		resp.List[i].IsFollow = DBIsFollowLiveRoom(sd.user_id, resp.List[i].LiveRoomId)
+		resp.List[i].PlayerCount = SP_onlineLiveMgr.GetPlayCount(resp.List[i].LiveRoomId)
 	}
 }
 
@@ -65,7 +66,7 @@ func GetFcousLiveRoomList(resp *gotye_protocol.GetFcousLiveRoomListResponse, req
 
 	var err error
 	if sd.bfcousOnline {
-		logger.Info("GetFcousLiveRoomList : get online fcous list, account=", sd.account)
+		logger.Info("GetFcousLiveRoomList : get online fcous list, nickname=", sd.nickname)
 		sd.fcousLastId, err = DBGetOnlineFocusLiveRoomList(resp, sd.user_id, sd.fcousLastId, count)
 		if err != nil {
 			resp.SetStatus(gotye_protocol.API_SERVER_ERROR)
@@ -73,8 +74,13 @@ func GetFcousLiveRoomList(resp *gotye_protocol.GetFcousLiveRoomListResponse, req
 			return
 		} else {
 			resp.SetStatus(gotye_protocol.API_SUCCESS)
+
+			for i := range resp.OnlineList {
+				resp.OnlineList[i].PlayerCount = SP_onlineLiveMgr.GetPlayCount(resp.OnlineList[i].LiveRoomId)
+			}
+
 			if len(resp.OnlineList) >= count {
-				logger.Infof("GetFcousLiveRoomList : get online list full, account=%d, len=%d", sd.account, len(resp.OnlineList))
+				logger.Infof("GetFcousLiveRoomList : get online list full, nickname=%s, len=%d", sd.nickname, len(resp.OnlineList))
 				return
 			} else {
 				logger.Infof("GetFcousLiveRoomList : get online finished. and start get offline list.")
@@ -94,5 +100,5 @@ func GetFcousLiveRoomList(resp *gotye_protocol.GetFcousLiveRoomListResponse, req
 	} else {
 		resp.SetStatus(gotye_protocol.API_SUCCESS)
 	}
-	logger.Infof("GetFcousLiveRoomList : account=%s, onlineLen=%d, offlineLen=%d", sd.account, len(resp.OnlineList), len(resp.OfflineList))
+	logger.Infof("GetFcousLiveRoomList : nickname=%s, onlineLen=%d, offlineLen=%d", sd.nickname, len(resp.OnlineList), len(resp.OfflineList))
 }

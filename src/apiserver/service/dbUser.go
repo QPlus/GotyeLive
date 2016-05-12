@@ -11,15 +11,15 @@ import (
 	"github.com/futurez/litego/util"
 )
 
-func DBCheckUserAccount(username, password string) (userId, headPicId int64, account, nickname string, sex int8, status_code int) {
+func DBCheckUserAccount(username, password string) (userId, headPicId int64, nickname string, sex int8, status_code int) {
 	db := SP_MysqlDbPool.GetDBConn()
 	var pwd string
-	err := db.QueryRow("SELECT user_id, account, nickname, pwd, headpic_id, sex FROM tbl_users WHERE account=? OR phone=? OR email=?",
-		username, username, username).Scan(&userId, &account, &nickname, &pwd, &headPicId, &sex)
+	err := db.QueryRow("SELECT user_id, nickname, pwd, headpic_id, sex FROM tbl_users WHERE phone=? OR nickname=?",
+		username, username).Scan(&userId, &nickname, &pwd, &headPicId, &sex)
 	switch {
 	case err == sql.ErrNoRows:
 		logger.Infof("DBCheckUserAccount : %s not exists.", username)
-		status_code = gotye_protocol.API_ACCOUNT_NOT_EXISTS_ERROR
+		status_code = gotye_protocol.API_USERNAME_NOT_EXISTS_ERROR
 		return
 	case err != nil:
 		logger.Error("DBCheckUserAccount : ", err.Error())
@@ -41,12 +41,24 @@ func DBCheckUserAccount(username, password string) (userId, headPicId int64, acc
 	return
 }
 
-func DBIsAccountExists(account string) bool {
-	logger.Info("DBIsAccountExists : account=", account)
+func DBGetUserIdByNickname(nickname string) int64 {
+	logger.Info("DBGetUserIdByNickname: nickname=", nickname)
+	db := SP_MysqlDbPool.GetDBConn()
+	var userId int64
+	err := db.QueryRow("SELECT user_id FROM tbl_users WHERE nickname=?", nickname).Scan(&userId)
+	if err != nil {
+		logger.Error("DBGetUserIdByNickname : err=", err.Error())
+		return 0
+	}
+	return userId
+}
+
+func DBIsNicknameExists(nickname string) bool {
+	logger.Info("DBIsAccountExists : nickname=", nickname)
 
 	db := SP_MysqlDbPool.GetDBConn()
 	var count int
-	err := db.QueryRow("SELECT count(*) as count FROM tbl_users WHERE account=?", account).Scan(&count)
+	err := db.QueryRow("SELECT count(*) as count FROM tbl_users WHERE nickname=?", nickname).Scan(&count)
 	switch {
 	case err == sql.ErrNoRows:
 		logger.Warn("DBIsPhoneExists : why not row.")
@@ -71,26 +83,10 @@ func DBIsPhoneExists(phone string) bool {
 	return count != 0
 }
 
-func DBIsEmailExists(email string) bool {
-	logger.Info("DBIsEmailExists : email=", email)
-
-	db := SP_MysqlDbPool.GetDBConn()
-	var count int
-	err := db.QueryRow("SELECT count(*) FROM tbl_users WHERE email=?", email).Scan(&count)
-	switch {
-	case err == sql.ErrNoRows:
-		logger.Warn("DBIsEmailExists : why not row.")
-	case err != nil:
-		logger.Error("DBIsEmailExists : ", err.Error())
-	}
-	return count != 0
-}
-
 //create new user
 func DBCreateUserAccount(phone, passwd string) int64 {
 	db := SP_MysqlDbPool.GetDBConn()
-	res, err := db.Exec("INSERT INTO tbl_users(account,phone,nickname,pwd) VALUES(?,?,?,?)",
-		phone, phone, phone, util.Md5Hash(passwd))
+	res, err := db.Exec("INSERT INTO tbl_users(phone,nickname,pwd) VALUES(?,?,?)", phone, util.RandNickname(), util.Md5Hash(passwd))
 	if err != nil {
 		logger.Error("DBCreateUserAccount : ", err.Error())
 		return -1
@@ -108,16 +104,13 @@ func DBModifyUserNickName(userid int64, nickname string) error {
 		return err
 	}
 	num, _ := res.RowsAffected()
-	logger.Info("DBCreateUserAccount : RowsAffected=", num)
+	logger.Info("DBModifyUserNickName : RowsAffected=", num)
 	return nil
 }
 
-func DBModifyUserInfo(userid int64, nickname string, sex int8, addr string) error {
+func DBModifyUserInfo(userid int64, sex int8, addr string) error {
 	db := SP_MysqlDbPool.GetDBConn()
 	var setValue []string
-	if len(nickname) > 0 {
-		setValue = append(setValue, fmt.Sprintf("nickname='%s'", nickname))
-	}
 	if sex == 1 || sex == 2 {
 		setValue = append(setValue, fmt.Sprintf("sex=%d", sex))
 	}
@@ -130,7 +123,7 @@ func DBModifyUserInfo(userid int64, nickname string, sex int8, addr string) erro
 
 	res, err := db.Exec(sql)
 	if err != nil {
-		logger.Error("DBModifyUserNickName : ", err.Error())
+		logger.Error("DBModifyUserInfo : ", err.Error())
 		return err
 	}
 	num, _ := res.RowsAffected()
