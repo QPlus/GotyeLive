@@ -28,7 +28,6 @@ Android App亲加希望大家通过学习之后,有开源精神的程序员能�
 <img src="pic/gotyelive1.0.png" width="150"/>
 
 ##亲加直播交流QQ群
-全民直播App视频技术 : [544476772](pic/gotyelive-group01.png)
+全民直播App视频技术 : [202871487]
 
-<img src="pic/gotyelive-group01.png" width="150" />
 
